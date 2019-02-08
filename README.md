@@ -39,6 +39,8 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position)`
  
    - When the playback is complete, the `AudioSource` will be instantly put back to its original place. There is no expensive reparenting involved; the `SoundManager` simply creates a `GameObject` for each pooled `AudioSource`, so it can position them anywhere.
+
+   - *Note that this is generally not a replacement for `AudioSource`s on moving objects, since it stays at the same position until the playback is complete. It would be rather easy to add a transform tracking feature, but for moving objects chances are you're better off with the traditional approach of having an emitter directly on your `GameObject`. A reparenting feature could work, and that would be also trivial to implement, but I'd need to look into the performance implications of frequent reparenting.*
   
 - ### Overriding preset pitch and volume
   - There is an overloaded version of the `PlaySound()` method accepting two floats which serve as multipliers to pitch and volume. So if you find yourself wanting to play a faster/slower or louder/quieter sound than normal, or play it reverse by using a negative pitch, you can.
