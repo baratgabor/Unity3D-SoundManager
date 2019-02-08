@@ -89,7 +89,7 @@ Just for illustrative purposes, because it's really obvious and straightforward 
 
 4. **You're ready to call `SoundManager`'s `PlaySound()` methods.**
 
-    *(Note that `SoundManager`, as it is provided here, uses a very simple singleton implementation that exposes a static instance of itself, called `Instance`. This instance is created when the class is first instantiated, and any further instantiation (which shouldn't happen to begin with) will destroy itself. You can just change this to however you prefer to access your service components.)*
+    *(Note that `SoundManager`, as it is provided here, uses a very simple singleton implementation that exposes a static instance of itself, called `Instance`. This instance is created when the class is first instantiated, and any further instantiation (which shouldn't happen to begin with) will destroy itself. You can just change this to however you prefer to access your service components. For example you can just inject the SoundManager as a dependency into your classes through their constructor. Just kidding, because Unity sucks and you can't even use constructors. ;) )*
 
 
 ## What this component doesn't have
