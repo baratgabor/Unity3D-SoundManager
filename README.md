@@ -21,15 +21,39 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
 - ### Playing sounds with modulated pitch/volume
   - Sounds sound the best if you slightly modulate the pitch and volume each time you play them, to make them feel natural. It's messy to do this individually everywhere.
 
+
+## Usage examples
+
+Just for illustrative purposes, because it's really obvious and straightforward to use.
+
+  - Playing a 'sound type' **the simplest way possible** (no 3D positioning, perfect for mobile games):
+
+     `SoundManager.Instance.PlaySound(GameSound.Death);`
+
+  - Playing a 'sound type' **at a given world position**:
+
+     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position);`
+     
+  - Playing a 'sound type' **at a given world position**, by **overriding pitch and volume** with a multiplier on top (obviously you can leave out the parameter names :) ):
+
+     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f);`
+     
+  - Playing a 'sound type' **at a given world position**, by **overriding pitch and volume** with a multiplier on top, and setting a **callback to be invoked when the sound playback finishes** (where *DoAfterPlayback* is a void parameterless method):
+
+     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f, DoAfterPlayback);`
+     
+*(Note that the callback shown is obviously available as an optional parameter on all of the method overloads, not just on the longest. Also note that there is an overload for setting pitch and volume override without having to specify a `Vector3`.)*
+
 ## Features
 
 - ### Customizable random pitch and volume range for each AudioClip
-  - You can set up the range of random pitch and volume for each audioclip at a centralized location. Then you just simply play the sound by referencing it as an `enum` value, for example:
- 
-     `SoundManager.Instance.PlaySound(GameSound.Death)`
+  - You can set up the range of random pitch and volume for each audioclip at a centralized location. Then you just simply play the sound by invoking `PlaySound()`, and the pitch and volume will be automatically modulated each time.
+  
+- ### Defining multiple `AudioClip`s for a sound type
+  - One given sound type can have multiple entries and `AudioClip`s associated to it in the list. The `SoundManager` automatically creates a list internally from all 'sound variations' of a given sound type, and when you invoke `PlaySound()`, it selects one randomly. This is also a rather important part of providing rich and diverse audio experiences.
   
 - ### Smart, automatic pooling of AudioSources
-  - You can define how many simultaneous sounds you want to support at startup. The `SoundManager` automatically reserves them from the pool to play the requested sound, waits for the playback to stop, and then puts the `AudioSource` back to the pool. No polling involved whatsoever. Coroutine-based operation. No wasteful use of collections, it uses a simple `Stack` the way it's supposed to be used.
+  - You can define how many simultaneous sounds you want to support at startup. The `SoundManager` automatically reserves them from the pool to play the requested sound, waits for the playback to stop, and then puts the `AudioSource` back to the pool. No polling involved whatsoever. Coroutine-based operation. No wasteful use of collections, it uses a simple `Stack` the way it's supposed to be used.  
  
 - ### Support for 3D positioned AudioSources
   - My current game is 2D, so I have no use for this, but I wanted to add this little extra before sharing it. Basically, you can simply use an overloaded version of the `PlaySound()` method that accepts a `Vector3` position defining where to play the sound. So, for example:
@@ -37,7 +61,7 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position)`
  
    - When the playback is complete, the `AudioSource` will be instantly put back to its original place. There is no expensive reparenting involved; the `SoundManager` simply creates a `GameObject` for each pooled `AudioSource`, so it can position them anywhere.
-   
+  
 - ### Overriding preset pitch and volume
   - There is an overloaded version of the `PlaySound()` method accepting two floats which serve as multipliers to pitch and volume. So if you find yourself wanting to play a faster/slower or louder/quieter sound than normal, or play it reverse by using a negative pitch, you can.
   
@@ -45,7 +69,17 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
   - All overloads of the `PlaySound()` method accept an optional `callback` parameter, in case you want to be notified when the playback finishes.
   - Additionally, all methods return the `AudioSource` playing your requested sound, so you can monitor it yourself if you want. But don't mess with the playback settings on the returned `AudioSource`, because then the `SoundManager` won't be able to predict the end time of the playback (to release the `AudioSource` to the pool). (It does have built-in safety mechanism for additional waiting, though.)
   
-
 - ### Thoroughly commented and documented code
   - I added standard XML documentation tags to all public methods, so Visual Studio's IntelliSense can help you understand the what do methods and parameters do.
   - Also, the code contains lots of comments, including on all private methods and everywhere where something might not be obvious. I think I went a bit overboard, because I know that many Unity3D users are not that well-versed in programming.
+
+- ### Generally robust and error-tolerant design
+  - There are a lot of checks internally for various error cases, and they log intelligible warning messages to the console. Of course you might want to strip out this debug logging, integrate some switchable or injected logging system, or whatever.
+  
+- ### Generally efficient code
+  - I tried to avoid allocations and losing performance for no good reason. So it uses `bool` flags instead of more expensive checking, properly uses a `Dictionary` for lookups and `Lists` for indexed access, and even caches `Vector3.zero` to avoid those repetitive calls.
+  - One thing you might want to look into is the infamous allocation when you use `enum` as `Dictionary` keys. I have no idea if this still happens in the version of Mono current Unity3D releases use; if so, you can supposedly avoid it by providing a custom comparer.
+  
+## Notes
+
+Let me know if you happen to find any bugs, or spot any sort of weirdness with the code. I'm coming from normal .Net development, so I can't rule out the possibility that I'm anaware of some weirdness in Unity how handles lifecycle of objects, coroutines, or who knows what.
