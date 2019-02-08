@@ -83,8 +83,11 @@ Just for illustrative purposes, because it's really obvious and straightforward 
 
 1. **Specify your `sound types` by editing the `GameSound` enum.** This means that all the sounds you want to be able to play need to be named in this enum. This obviously has some drawbacks, for example you can't just nilly-willy delete values from the enum and shift the rest of the values, because Unity actually saves the enum values as an `integer`. But using the enums is very comfortable, so I personally like this approach. If you want, you can look into associating explicit integer values to your enum values, and then it's safer to modify it.
 2. **Add the `SoundManager` script as a component to a `GameObject`.** This hardly needs an explanation, if you have ever seen a computer before.
-3. **Add entries to the `SoundManager` component's `Sound List` array in Inspector.** Change the 'None' sound type to an actual sound type, select your `AudioClip`, and set your pitch and volume ranges. Note that - obviously - Unity stores everything you add here with the given instance of the component, so you'd probably want to make a prefab from it, and use that in your scenes, or set it not to destroy on load. *(I have a `ScriptableObject`-based architecture that decouples configuration data from components, and possibly I'll convert my `SoundManager` to use that, but I felt it would complicate matters too much if I included it here. I intended to share this just as a simple but powerful component.)*
-4. **You're ready to call `SoundManager`'s `PlaySound()` methods.
+3. **Add entries to the `SoundManager` component's `Sound List` array in Inspector.** Change the 'None' sound type to an actual sound type, select your `AudioClip`, and set your pitch and volume ranges. Note that - obviously - Unity stores everything you add here with the given instance of the component, so you'd probably want to make a prefab from it, and use that in your scenes, or set it not to destroy on load.
+
+  *(I have a `ScriptableObject`-based architecture that decouples configuration data from components, and possibly I'll convert my `SoundManager` to use that, but I felt it would complicate matters too much if I included it here. I intended to share this just as a simple but powerful component.)*
+
+4. **You're ready to call `SoundManager`'s `PlaySound()` methods.**
 
 *(Note that `SoundManager`, as it is provided here, uses a very simple singleton implementation that exposes a static instance of itself, called `Instance`. This instance is created when the class is first instantiated, and any further instantiation (which shouldn't happen to begin with) will destroy itself. You can just change this to however you prefer to access your service components.)*
 
