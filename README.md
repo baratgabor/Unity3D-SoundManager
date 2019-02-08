@@ -21,29 +21,6 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
 - ### Playing sounds with modulated pitch/volume
   - Sounds sound the best if you slightly modulate the pitch and volume each time you play them, to make them feel natural. It's messy to do this individually everywhere.
 
-
-## Usage examples
-
-Just for illustrative purposes, because it's really obvious and straightforward to use.
-
-  - Playing a 'sound type' **the simplest way possible** (no 3D positioning, perfect for mobile games):
-
-     `SoundManager.Instance.PlaySound(GameSound.Death);`
-
-  - Playing a 'sound type' **at a given world position**:
-
-     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position);`
-     
-  - Playing a 'sound type' **at a given world position**, by **overriding pitch and volume** with a multiplier on top (obviously you can leave out the parameter names :) ):
-
-     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f);`
-     
-  - Playing a 'sound type' **at a given world position**, by **overriding pitch and volume** with a multiplier on top, and setting a **callback to be invoked when the sound playback finishes** (where *DoAfterPlayback* is a void parameterless method):
-
-     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f, DoAfterPlayback);`
-     
-*(Note that the callback shown is obviously available as an optional parameter on all of the method overloads, not just on the longest. Also note that there is an overload for setting pitch and volume override without having to specify a `Vector3`.)*
-
 ## Features
 
 - ### Customizable random pitch and volume range for each AudioClip
@@ -79,7 +56,44 @@ Just for illustrative purposes, because it's really obvious and straightforward 
 - ### Generally efficient code
   - I tried to avoid allocations and losing performance for no good reason. So it uses `bool` flags instead of more expensive checking, properly uses a `Dictionary` for lookups and `Lists` for indexed access, and even caches `Vector3.zero` to avoid those repetitive calls.
   - One thing you might want to look into is the infamous allocation when you use `enum` as `Dictionary` keys. I have no idea if this still happens in the version of Mono current Unity3D releases use; if so, you can supposedly avoid it by providing a custom comparer.
-  
+
+## Usage examples
+
+Just for illustrative purposes, because it's really obvious and straightforward to use.
+
+  - Playing a 'sound type' **the simplest way possible** (no 3D positioning, perfect for mobile games):
+
+     `SoundManager.Instance.PlaySound(GameSound.Rocket);`
+
+  - Playing a 'sound type' **at a given world position**:
+
+     `SoundManager.Instance.PlaySound(GameSound.Rocket, transform.position);`
+     
+  - Playing a 'sound type' **at a given world position**, by **overriding pitch and volume** with a multiplier on top (obviously you can leave out the parameter names :) ):
+
+     `SoundManager.Instance.PlaySound(GameSound.Rocket, transform.position, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f);`
+     
+  - Playing a 'sound type' **at a given world position**, by **overriding pitch and volume** with a multiplier on top, and setting a **callback to be invoked when the sound playback finishes** (where *DoAfterPlayback* is a void parameterless method):
+
+     `SoundManager.Instance.PlaySound(GameSound.Rocket, transform.position, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f, DoAfterPlayback);`
+     
+*(Note that the callback shown is obviously available as an optional parameter on all of the method overloads, not just on the longest. Also note that there is an overload for setting pitch and volume override without having to specify a `Vector3`.)*
+
+## Setup
+
+1. **Specify your `sound types` by editing the `GameSound` enum.** This means that all the sounds you want to be able to play need to be named in this enum. This obviously has some drawbacks, for example you can't just nilly-willy delete values from the enum and shift the rest of the values, because Unity actually saves the enum values as an `integer`. But using the enums is very comfortable, so I personally like this approach. If you want, you can look into associating explicit integer values to your enum values, and then it's safer to modify it.
+2. **Add the `SoundManager` script as a component to a `GameObject`.** This hardly needs an explanation, if you have ever seen a computer before.
+3. **Add entries to the `SoundManager` component's `Sound List` array in Inspector.** Change the 'None' sound type to an actual sound type, select your `AudioClip`, and set your pitch and volume ranges.
+4. **You're ready to call `SoundManager`'s `PlaySound()` methods.
+
+*(Note that `SoundManager`, as it is provided here, uses a very simple singleton implementation that exposes a static instance of itself, called `Instance`. This instance is created when the class is first instantiated, and any further instantiation (which shouldn't happen to begin with) will destroy itself. You can just change this to however you prefer to access your service components.)*
+
+
+## What this component doesn't have
+
+- There is no Editor customization provided. The display of arrays in the Unity Inspector is hideous, so I did include some trickery *(with platform-specific compile directives, restricting it to the Unity Editor)* to at least replace the default `'Element'`names with the value of the enums. But if you use some generic/universal Editor script package, possibly even this is superfluous.
+- One functionality that would be nice to have is a 'Play' button right besides the sound settings, so you could try how does the AudioClip sound with the set ranges. Maybe I'll look into implementing this.
+
 ## Notes
 
-Let me know if you happen to find any bugs, or spot any sort of weirdness with the code. I'm coming from normal .Net development, so I can't rule out the possibility that I'm anaware of some weirdness in Unity how handles lifecycle of objects, coroutines, or who knows what.
+**Let me know if you happen to find any bugs**, or spot any sort of weirdness with the code. I'm coming from normal .Net development, so I can't rule out the possibility that I'm anaware of some weirdness in Unity how handles lifecycle of objects, coroutines, or who knows what.
