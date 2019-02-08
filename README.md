@@ -47,7 +47,7 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
   - Additionally, all methods return the `AudioSource` playing your requested sound, so you can monitor it yourself if you want. But don't mess with the playback settings on the returned `AudioSource`, because then the `SoundManager` won't be able to predict the end time of the playback (to release the `AudioSource` to the pool). (It does have built-in safety mechanism for additional waiting, though.)
   
 - ### Thoroughly commented and documented code
-  - I added standard XML documentation tags to all public methods, so Visual Studio's IntelliSense can help you understand the what do methods and parameters do.
+  - I added standard XML documentation tags to all public methods, so Visual Studio's IntelliSense can help you understand what do methods and parameters do.
   - Also, the code contains lots of comments, including on all private methods and everywhere where something might not be obvious. I think I went a bit overboard, because I know that many Unity3D users are not that well-versed in programming.
 
 - ### Generally robust and error-tolerant design
@@ -92,8 +92,8 @@ Just for illustrative purposes, because it's really obvious and straightforward 
 ## What this component doesn't have
 
 - There is no Editor customization provided. The display of arrays in the Unity Inspector is hideous, so I did include some trickery *(with platform-specific compile directives, restricting it to the Unity Editor)* to at least replace the default `'Element'`names with the value of the enums. But if you use some generic/universal Editor script package, possibly even this is superfluous.
-- One functionality that would be nice to have is a 'Play' button right besides the sound settings, so you could try how does the AudioClip sound with the set ranges. Maybe I'll look into implementing this.
+- One functionality that would be nice to have is a 'Play' button right besides the sound settings, so you could listen to how does the AudioClip sound with the given ranges. Maybe I'll look into implementing this.
 
 ## Notes
 
-**Let me know if you happen to find any bugs**, or spot any sort of weirdness with the code. I'm coming from normal .Net development, so I can't rule out the possibility that I'm anaware of some weirdness in Unity how handles lifecycle of objects, coroutines, or who knows what.
+**Let me know if you happen to find any bugs**, or spot any sort of weirdness with the code. I'm coming from normal .Net development, so I can't rule out the possibility that I'm unaware of some weirdness in Unity how handles lifecycle of objects, coroutines, or who knows what.
