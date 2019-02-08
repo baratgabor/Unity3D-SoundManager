@@ -4,7 +4,13 @@ My take on a sound manager in Unity3D. Admittedly I haven't looked into any impl
 
 I've been using it in my project for quite some time, and I'm a satisfied customer, so to speak, so I decided to share it.
 
-(Never mind that when I started to 'polish it up' for sharing it was merely 165 lines long...)
+Pro tip: It's totally not spaghetti code, like most things you can find in relation to Unity. ;) It's not perfect either, though, but I didn't want to fragment it too much, since the added method call overhead, however minor, is not that useful in games.
+
+*(Never mind that when I started to 'polish it up' for sharing it was merely 165 lines long... It's still small with around 400 lines, but not as tiny and cute anymore.)*
+
+## Quick overview of Inspector pane:
+
+![SoundManager pane in Inspector](SoundManager-Inspector-example.png)
 
 ## Rationale
 
