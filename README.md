@@ -8,7 +8,7 @@ I've been using it in my project for quite some time, and I'm a satisfied custom
 
 ## Rationale
 
-Pretty much everybody uses some sort of audio or sound manager, from what I'm aware of. But if you're not sure what's the point, here are a few pointers:
+Pretty much everybody uses some sort of audio or sound manager, from what I'm aware of. But if you're not sure what's the point:
 
 - ### Playing sounds on destroyed/disabled objects
   - If you have an AudioSource on a GameObject, and you destroy it (or ideally, disable for releasing into the pool), you can't play any sounds on it, since sound playback stops instantly.
