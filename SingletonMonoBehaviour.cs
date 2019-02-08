@@ -3,6 +3,10 @@ using UnityEngine;
 
 namespace LeakyAbstraction
 {
+    /// <summary>
+    /// This is just a very minimal singleton helper class, facilitating easy access to the SoundManager class.
+    /// Replace or customize it to your liking.
+    /// </summary>
     [DisallowMultipleComponent]
     public abstract class SingletonMonoBehaviour<T> : MonoBehaviour where T : SingletonMonoBehaviour<T>
     {
