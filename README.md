@@ -1,6 +1,6 @@
 # SoundManager component for Unity3D
 
-My take on a sound manager in Unity3D. Admittedly I haven't looked into any implementations on the Asset Store, etc., because I didn't want to spoil the fun of writing mine from scratch.
+My take on a light-weight sound manager in Unity3D. Admittedly I haven't looked into any implementations on the Asset Store, etc., because I didn't want to spoil the fun of writing mine from scratch.
 
 I've been using it in my project for quite some time, and I'm a satisfied customer, so to speak, so I decided to share it.
 
