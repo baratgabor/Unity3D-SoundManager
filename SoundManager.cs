@@ -337,7 +337,7 @@ namespace LeakyAbstraction
                 audioSource.transform.position = soundPosition;
 
             // Schedule audio source release
-            var playtime = sound.audioClip.length / pitch;
+            var playtime = Mathf.Abs(sound.audioClip.length / pitch); // Abs() is to support negative pitch
             StartCoroutine(
                 ReleaseAudioSourceDelayed(audioSource, playtime, positionalSound, playFinishedCallback)
             );
