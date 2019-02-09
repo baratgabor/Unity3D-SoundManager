@@ -31,16 +31,16 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
   - One given sound type can have multiple entries and `AudioClip`s associated to it in the list. The `SoundManager` automatically creates a list internally from all 'sound variations' of a given sound type, and when you invoke `PlaySound()`, it selects one randomly. This is also a rather important part of providing rich and diverse audio experiences.
   
 - ### Smart, automatic pooling of AudioSources
-  - You can define how many simultaneous sounds you want to support at startup. The `SoundManager` automatically reserves them from the pool to play the requested sound, waits for the playback to stop, and then puts the `AudioSource` back to the pool. No polling involved whatsoever. Coroutine-based operation. No wasteful use of collections, it uses a simple `Stack` the way it's supposed to be used.  
+  - You can define how many simultaneous sounds you want to support at startup. When you invoke `PlaySound()`, the `SoundManager` automatically reserves an `AudioSource` from the pool to play the requested sound, waits for the playback to finish, and puts the `AudioSource` back to the pool. No polling involved whatsoever. Coroutine-based operation. No wasteful use of collections; it uses a simple `Stack` the way it's supposed to be used.
  
 - ### Support for 3D positioned AudioSources
-  - My current game is 2D, so I have no use for this, but I wanted to add this little extra before sharing it. Basically, you can simply use an overloaded version of the `PlaySound()` method that accepts a `Vector3` position defining where to play the sound. So, for example:
+  - My current game is 2D, so I have no use for this, but I wanted to add this little extra before sharing it. Basically, you can simply use an overload of the `PlaySound()` method that accepts a `Vector3` position defining where to play the sound. So, for example:
  
     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position)`
  
-   - When the playback is complete, the `AudioSource` will be instantly put back to its original place. There is no expensive reparenting involved; the `SoundManager` simply creates a `GameObject` for each pooled `AudioSource`, so it can position them anywhere.
+   - When the playback is complete, the `AudioSource` will be instantly put back to its original position. There is no expensive reparenting involved; the `SoundManager` simply creates a `GameObject` for each `AudioSource` in the pool at startup, so it can later position them anywhere.
 
-   - *Note that this is generally not a replacement for `AudioSource`s on moving objects, since it stays at the same position until the playback is complete. It would be rather easy to add a transform tracking feature, but for moving objects chances are you're better off with the traditional approach of having an emitter directly on your `GameObject`. A reparenting feature could work, and that would be also trivial to implement, but I'd need to look into the performance implications of frequent reparenting.*
+   - *Note that this is generally not a replacement for `AudioSource`s on moving objects, since it stays at the same position until the playback is complete. It would be rather easy to add a transform tracking feature, but for moving objects chances are you're better off with the traditional approach of having an emitter directly on your `GameObject`. A reparenting feature could work, and that would be also trivial to implement, but I'd need to look into the performance implications of frequent reparenting. (Btw, the `SoundManager` component should be obviously added to a `GameObject` in the scene that doesn't move.)*
   
 - ### Overriding preset pitch and volume
   - There is an overloaded version of the `PlaySound()` method accepting two floats which serve as multipliers to pitch and volume. So if you find yourself wanting to play a faster/slower or louder/quieter sound than normal, or play it reverse by using a negative pitch, you can.
