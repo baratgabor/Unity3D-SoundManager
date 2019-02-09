@@ -18,7 +18,7 @@ Pro tip: It's totally not spaghetti code, like many things you can find in relat
 Pretty much everybody uses some sort of audio or sound manager, from what I'm aware of. But if you're not sure what's the point:
 
 - ### Playing sounds on destroyed/disabled objects
-  - If you have an `AudioSource` on a GameObject, and you destroy it (or ideally, disable for releasing into the pool), you can't play any sounds on it, since sound playback stops instantly.
+  - If you have an `AudioSource` on a `GameObject`, and you destroy it (or ideally, disable for releasing into the pool), you can't play any sounds on it, since sound playback stops instantly.
 - ### Playing sounds with modulated pitch/volume
   - Sounds sound the best if you slightly modulate the pitch and volume each time you play them, to make them feel natural. It's messy to do this individually everywhere.
 
