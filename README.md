@@ -98,9 +98,9 @@ Just for illustrative purposes, because it's really obvious and straightforward 
 
 ## What this component doesn't have
 
-- There is no Editor customization provided. The display of arrays in the Unity Inspector is hideous, so I did include some trickery *(with platform-specific compile directives, restricting it to the Unity Editor)* to at least replace the default `'Element'`names with the value of the enums. But if you use some generic/universal Editor script package, possibly even this is superfluous.
+- There is no Editor customization provided. The display of arrays in the Unity Inspector is hideous, so I did include some trickery *(with platform-specific compile directives, restricting it to the Unity Editor)* to at least replace the default `'Element'`names with the value of the enums. But if you use some generic/universal Editor script package to prettify arrays, possibly even this is superfluous.
 - One functionality that would be nice to have is a 'Play' button right besides the sound settings, so you could listen to how does the AudioClip sound with the given ranges. Maybe I'll look into implementing this.
 
 ## Notes
 
-**Let me know if you happen to find any bugs**, or spot any sort of weirdness with the code. I'm coming from normal .Net development, so I can't rule out the possibility that I'm unaware of some weirdness in Unity how handles lifecycle of objects, coroutines, or who knows what.
+**Let me know if you happen to find any bugs**, or spot any sort of weirdness with the code. I'm coming from normal .Net development, so I can't rule out the possibility that I'm unaware of some weirdness in how Unity handles lifecycle of objects, coroutines, or who knows what.
