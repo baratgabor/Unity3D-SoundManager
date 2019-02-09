@@ -1,13 +1,13 @@
 # SoundManager component for Unity3D
 ## *With modulation ranges, AudioSource pooling, and playing at world coordinates*
 
-My take on a light-weight sound manager in Unity3D. Admittedly I haven't looked into any implementations on the Asset Store, etc., because I didn't want to spoil the fun of writing mine from scratch. So this is just a small, single-class component with a nested helper class; with solid core features that should perform reliably and efficiently.
+My take on a light-weight sound manager for Unity3D. Admittedly I haven't looked into any implementations on the Asset Store, etc., because I didn't want to spoil the fun of writing mine from scratch. So this is just a small, single-class component with a nested helper class; with solid core features that should perform reliably and efficiently.
 
 I've been using it in my project for quite some time, and I'm a satisfied customer, so to speak, so I decided to share it.
 
 Pro tip: It's totally not spaghetti code, like many things you can find in relation to Unity. ;) It's not perfect either, though, but I didn't want to fragment it too much, since the added method call overhead, however minor, is not that useful in games.
 
-*(Never mind that when I started to 'polish it up' for sharing it was merely 165 lines long... It's still small with around 400 lines, but not as tiny and cute anymore.)*
+*Note that the comments in the code are a bit excessive if you're an experienced developer. I just tried to help others too to understand it better.*
 
 ## Quick overview of Inspector pane:
 
@@ -18,7 +18,7 @@ Pro tip: It's totally not spaghetti code, like many things you can find in relat
 Pretty much everybody uses some sort of audio or sound manager, from what I'm aware of. But if you're not sure what's the point:
 
 - ### Playing sounds on destroyed/disabled objects
-  - If you have an AudioSource on a GameObject, and you destroy it (or ideally, disable for releasing into the pool), you can't play any sounds on it, since sound playback stops instantly.
+  - If you have an `AudioSource` on a GameObject, and you destroy it (or ideally, disable for releasing into the pool), you can't play any sounds on it, since sound playback stops instantly.
 - ### Playing sounds with modulated pitch/volume
   - Sounds sound the best if you slightly modulate the pitch and volume each time you play them, to make them feel natural. It's messy to do this individually everywhere.
 
@@ -27,7 +27,7 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
 - ### Customizable random pitch and volume range for each AudioClip
   - You can set up the range of random pitch and volume for each audioclip at a centralized location. Then you just simply play the sound by invoking `PlaySound()`, and the pitch and volume will be automatically modulated each time.
   
-- ### Defining multiple `AudioClip`s for a sound type
+- ### Defining multiple AudioClips for a sound type
   - One given sound type can have multiple entries and `AudioClip`s associated to it in the list. The `SoundManager` automatically creates a list internally from all 'sound variations' of a given sound type, and when you invoke `PlaySound()`, it selects one randomly. This is also a rather important part of providing rich and diverse audio experiences.
   
 - ### Smart, automatic pooling of AudioSources
