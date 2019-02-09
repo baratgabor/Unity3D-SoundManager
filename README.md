@@ -48,7 +48,7 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
 - ### Callback when playback is finished
   - All overloads of the `PlaySound()` method accept an optional `callback` parameter, in case you want to be notified when the playback finishes.
   - Additionally, all methods return the `AudioSource` playing your requested sound, so you can monitor it yourself if you want. But don't mess with the playback settings on the returned `AudioSource`, because then the `SoundManager` won't be able to predict the end time of the playback (to release the `AudioSource` to the pool). (It does have built-in safety mechanism for additional waiting, though.)
-- If the playback fails for whatever reason, the return value is `null`, so you can actually check if playback was successful.
+  - If the playback fails for whatever reason, the return value is `null`, so you can actually check if playback was successful.
   
 - ### Thoroughly commented and documented code
   - I added standard XML documentation tags to all public methods, so Visual Studio's IntelliSense can help you understand what do the methods and parameters do.
@@ -104,3 +104,7 @@ Just for illustrative purposes, because it's really obvious and straightforward 
 ## Notes
 
 **Let me know if you happen to find any bugs**, or spot any sort of weirdness with the code. I'm coming from normal .Net development, so I can't rule out the possibility that I'm unaware of some weirdness in how Unity handles lifecycle of objects, coroutines, or who knows what.
+
+## Licence
+
+Only mentioning this because someone asked me about it. You can use this code for whatever or however you want. It's not exactly a huge feat of software engineering. Perhaps just try not to sell it wholesale on the Asset Store as your own work. :) But if you make something significantly more complex out of it, feel free to call it your own and sell it if you want. Though, credit is always welcomed of course.
