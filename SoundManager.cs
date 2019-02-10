@@ -294,7 +294,7 @@ namespace LeakyAbstraction
             }
 
             // If requested, check and report which soundtypes don't have any sound entry associated in Inspector (i.e. can't play).
-            if (_checkUnassignedSounds)
+            if (_checkUnassignedSounds && _log != null)
                 CheckAndLogUnassignedSoundTypes();
         }
 
