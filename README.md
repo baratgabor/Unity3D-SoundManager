@@ -9,9 +9,9 @@ Pro tip: It's totally not spaghetti code, like many things you can find in relat
 
 *Note that the comments in the code are a bit excessive if you're an experienced developer. I just tried to help others too to understand it better.*
 
-**Update1:** I added the capability of `Transform` tracking playback in the form of two new public methods. This means that the SoundManager can be used for moving objects too. For this addition I refactored the class internally. Short testing shows this new feature to be working well, but please inform me of any bugs.
+**Update1:** I added the capability of **Transform tracking playback** in the form of two new public methods. This means that the SoundManager can be used for moving objects too. For this addition I refactored the class internally. Short testing shows this new feature to be working well, but please inform me of any bugs.
 
-**Update2:** I encapsulated all debug log messages into a separate class, and added a logging setting to the Inspector. So you can turn off logging for deployed builds in a way that completely avoids string operations and allocations (since all debug messages are constructed inside this helper class).
+**Update2:** I encapsulated all debug log messages into a separate class, and added a **logging setting** to the Inspector. So **you can turn off logging for deployed builds** in a way that completely avoids string operations and allocations (since all debug messages are constructed inside this helper class).
 
 ## Quick overview of Inspector pane:
 
@@ -37,12 +37,19 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
 - ### Smart, automatic pooling of AudioSources
   - You can define how many simultaneous sounds you want to support at startup. When you invoke `PlaySound()`, the `SoundManager` automatically reserves an `AudioSource` from the pool to play the requested sound, waits for the playback to finish, and puts the `AudioSource` back to the pool. No polling involved whatsoever. Coroutine-based operation. No wasteful use of collections; it uses a simple `Stack` the way it's supposed to be used. If it runs out of available `AudioSource`s, it can grow the pool on-demand (if you enable this feature).
  
-- ### Support for 3D positioned AudioSources
+- ### Support for 3D positioned sound playback
   - My current game is 2D, so I have no use for this, but I wanted to add this little extra before sharing it. Basically, you can simply use an overload of the `PlaySound()` method that accepts a `Vector3` position defining where to play the sound. So, for example:
  
     `SoundManager.Instance.PlaySound(GameSound.Death, transform.position)`
  
    - When the playback is complete, the `AudioSource` will be instantly put back to its original position. There is no expensive reparenting involved; the `SoundManager` simply creates a `GameObject` for each `AudioSource` in the pool at startup, so it can later position them anywhere.
+   
+- ### NEW: Support for Transform tracking sound playback
+  - After some pondering I decided to add this too. This means being able to use the `SoundManager` in cases when you need a moving `AudioSource` (for a moving `GameObject`). There are two new methods available which take a `Transform`, and they follow the position of this transform for the entire duration of the playback (and then jump back to origin). Invoking these methods are similarly simple, for example:
+
+    `SoundManager.Instance.PlaySoundFollow(GameSound.RocketLaunch, transform)`
+  
+  - This new tracking feature internally uses polling via calling `AudioSource.isPlaying`, instead of fixed time waiting, so it's a bit more expensive, but probably not noticeable in most cases.
 
    - *Note that this is generally not a replacement for `AudioSource`s on moving objects, since it stays at the same position until the playback is complete. It would be rather easy to add a transform tracking feature, but for moving objects chances are you're better off with the traditional approach of having an emitter directly on your `GameObject`. A reparenting feature could work, and that would be also trivial to implement, but I'd need to look into the performance implications of frequent reparenting. (Btw, the `SoundManager` component should be obviously added to a `GameObject` in the scene that doesn't move.)*
   
@@ -84,6 +91,8 @@ Just for illustrative purposes, because it's really obvious and straightforward 
   - Playing a 'sound type' **at a given world position**, by **overriding pitch and volume** with a multiplier, and setting a **callback to be invoked when the sound playback finishes** (where *DoAfterPlayback* is a void parameterless method):
 
      `SoundManager.Instance.PlaySound(GameSound.Rocket, transform.position, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f, DoAfterPlayback);`
+     
+     (The new `Transform` tracking playback is similarly simple, so I'm not including those examples.)
      
 *(Note that the callback shown is obviously available as an optional parameter on all of the method overloads, not just on the longest. Also note that there is an overload for setting pitch and volume override without having to specify a `Vector3`.)*
 
