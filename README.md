@@ -9,6 +9,9 @@ Pro tip: It's totally not spaghetti code, like many things you can find in relat
 
 *Note that the comments in the code are a bit excessive if you're an experienced developer. I just tried to help others too to understand it better.*
 
+**Update1:** I added the capability of `Transform` tracking playback in the form of two new public methods. This means that the SoundManager can be used for moving objects too. For this addition I refactored the class internally.
+**Update2:** I encapsulated all debug log messages into a separate class, and added a logging setting to the Inspector. So you can turn off logging for deployed builds in a way that completely avoids string operations and allocations (since all debug messages are constructed inside this helper class).
+
 ## Quick overview of Inspector pane:
 
 ![SoundManager pane in Inspector](SoundManager-Inspector-example.png)
