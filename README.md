@@ -1,5 +1,5 @@
 # SoundManager component for Unity3D
-## *With modulation ranges, AudioSource pooling, and playing at world coordinates*
+## *With modulation ranges, AudioSource pooling, playing at world coordinates, and even playing while following a Transform*
 
 My take on a light-weight sound manager for Unity3D. Admittedly I haven't looked into any implementations on the Asset Store, etc., because I didn't want to spoil the fun of writing mine from scratch. So this is just a small, single-class component with a nested helper class; with solid core features that should perform reliably and efficiently.
 
