@@ -50,8 +50,6 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
     `SoundManager.Instance.PlaySoundFollow(GameSound.RocketLaunch, transform)`
   
   - This new tracking feature internally uses polling via calling `AudioSource.isPlaying`, instead of fixed time waiting, so it's a bit more expensive, but probably not noticeable in most cases.
-
-   - *Note that this is generally not a replacement for `AudioSource`s on moving objects, since it stays at the same position until the playback is complete. It would be rather easy to add a transform tracking feature, but for moving objects chances are you're better off with the traditional approach of having an emitter directly on your `GameObject`. A reparenting feature could work, and that would be also trivial to implement, but I'd need to look into the performance implications of frequent reparenting. (Btw, the `SoundManager` component should be obviously added to a `GameObject` in the scene that doesn't move.)*
   
 - ### Overriding preset pitch and volume
   - There is an overload of the `PlaySound()` method accepting two floats which serve as multipliers to pitch and volume. So if you find yourself wanting to play a faster/slower or louder/quieter sound than normal, or play it reverse by using a negative pitch, you can. These multipliers are applied on top of the already randomized pitch and volume, so the sound variation is kept intact.
