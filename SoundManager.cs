@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+using System;
 using UnityEngine;
 using UnityEditor;
 using System.Collections;
@@ -40,6 +39,12 @@ namespace LeakyAbstraction
             [Range(0, 2)]
             public float pitchHigh = 1f;
         }
+        public enum LoggingType
+        {
+            None,
+            LogOnlyInEditor,
+            LogAlways
+        }
 
         [Header("Number of simultaneous sounds supported at startup:")]
         [SerializeField]
@@ -51,7 +56,12 @@ namespace LeakyAbstraction
         [Tooltip("If set to TRUE, a new AudioSource will be created if all others are busy. If set to FALSE, the sound simply won't play.")]
         private bool _canGrowPool = true;
 
-        [Header("Report sound types which don't have sounds assigned:")]
+        [Header("Logging behavior:")]
+        [SerializeField]
+        [Tooltip("Note that selecting 'None' disables logging completely, so the next setting will have no effect.")]
+        private LoggingType _loggingType = LoggingType.LogOnlyInEditor;
+
+        [Header("Report sound types which don't have entries defines:")]
         [SerializeField]
         [Tooltip("If set to TRUE, all sound types defined in the Enum will be checked to see if there is at least one sound associated to them, and the unassigned ones will be reported in a warning.")]
         private bool _checkUnassignedSounds = true;
@@ -69,6 +79,8 @@ namespace LeakyAbstraction
         private const float RELEASE_MARGIN = 0.05f;
         private const float RETRYRELEASE_WAIT = 0.1f;
         private const string SOUNDPLAYER_GO_NAMEBASE = "SoundPlayer";
+
+        private SoundManagerDebugLogger _log;
 
 #if UNITY_EDITOR
         private void OnValidate()
@@ -98,9 +110,30 @@ namespace LeakyAbstraction
             if (_initialized == true)
                 return;
 
+            SetupLogging();
             PopulateSoundMap();
             CreateAudioSources();
             _initialized = true;
+        }
+
+        private void SetupLogging()
+        {
+            switch (_loggingType)
+            {
+                case LoggingType.None:
+                    break;
+                case LoggingType.LogOnlyInEditor:
+                    if (Application.isEditor)
+                        _log = new SoundManagerDebugLogger();
+                    break;
+                case LoggingType.LogAlways:
+                    _log = new SoundManagerDebugLogger();
+                    break;
+                default:
+                    Debug.LogException(
+                        new InvalidOperationException($"Unknown logging type '{_loggingType}' encountered. Cannot set up logging behavior."));
+                    break;
+            }
         }
 
         /// <summary>
@@ -125,7 +158,18 @@ namespace LeakyAbstraction
             => PlaySound(soundType, soundPosition, 1, 1, playFinishedCallback);
 
         /// <summary>
-        /// Plays the specified sound with the specified volume and pitch overrides.
+        /// Plays the specified sound while following the specified transform's position.
+        /// If multiple sounds are registed for the given type, selects one randomly.
+        /// </summary>
+        /// <param name="soundType">The pre-defined identifier of the sound to play.</param>
+        /// <param name="target">The transform to be followed during the playback.</param>
+        /// <param name="playFinishedCallback">Delegate to be invoked when playback completed.</param>
+        /// <returns>Returns the AudioSource that is playing the requested sound. Don't mess with it if you want the soundmanager to work dependably.</returns>
+        public AudioSource PlaySoundFollow(GameSound soundType, Transform target, Action playFinishedCallback = null)
+            => PlaySoundFollow(soundType, target, 1, 1, playFinishedCallback);
+
+        /// <summary>
+        /// Plays the specified sound with volume and pitch overrides.
         /// If multiple sounds are registed for the given type, selects one randomly.
         /// </summary>
         /// <param name="soundType">The pre-defined identifier of the sound to play.</param>
@@ -140,18 +184,21 @@ namespace LeakyAbstraction
             if (!canPlay)
                 return null;
 
-            return PlaySound_Internal(
-                GetRandomSound(soundList),
-                volumeMultiplier: volumeMultiplier,
-                pitchMultiplier: pitchMultiplier,
-                positionalSound: false,
-                soundPosition: _zeroVector,
-                playFinishedCallback
-            );
+            var (audioSource, playTime) = PlaySound_Internal(GetRandomSound(soundList), volumeMultiplier, pitchMultiplier);
+
+            // Vanilla waiter
+            StartCoroutine(
+                HandleActiveAudioSource(
+                    audioSource,
+                    playTime,
+                    playFinishedCallback)
+                );
+
+            return audioSource;
         }
 
         /// <summary>
-        /// Plays the specified sound at the specified world position, with the specified volume and pitch overrides.
+        /// Plays the specified sound with volume and pitch overrides, at the specified world position.
         /// If multiple sounds are registed for the given type, selects one randomly.
         /// </summary>
         /// <param name="soundType">The pre-defined identifier of the sound to play.</param>
@@ -167,14 +214,49 @@ namespace LeakyAbstraction
             if (!canPlay)
                 return null;
 
-            return PlaySound_Internal(
-                GetRandomSound(soundList),
-                volumeMultiplier,
-                pitchMultiplier,
-                positionalSound: true,
-                soundPosition: soundPosition,
-                playFinishedCallback
-            );
+            var (audioSource, playTime) = PlaySound_Internal(GetRandomSound(soundList), volumeMultiplier, pitchMultiplier);
+
+            // Positioned waiter
+            StartCoroutine(
+                HandleActiveAudioSource_Positioned(
+                    audioSource,
+                    playTime,
+                    soundPosition: soundPosition,
+                    playFinishedCallback)
+                );
+
+            return audioSource;
+        }
+
+        /// <summary>
+        /// Plays the specified sound with volume and pitch overrides, while following the specified transform's position.
+        /// If multiple sounds are registed for the given type, selects one randomly.
+        /// </summary>
+        /// <param name="soundType">The pre-defined identifier of the sound to play.</param>
+        /// <param name="target">The transform to be followed during the playback.</param>
+        /// <param name="volumeMultiplier">The multiplier to apply to the volume. Applies on top of the random range value defined in Inspector.</param>
+        /// <param name="pitchMultiplier">The multiplier to apply to the pitch. Applies on top of the random range value defined in Inspector.</param>
+        /// <param name="playFinishedCallback">Delegate to be invoked when playback completed.</param>
+        /// <returns>Returns the AudioSource that is playing the requested sound. Don't mess with it if you want the soundmanager to work dependably.</returns>
+        public AudioSource PlaySoundFollow(GameSound soundType, Transform target, float volumeMultiplier, float pitchMultiplier, Action playFinishedCallback = null)
+        {
+            var (canPlay, soundList) = SoundPlayPreChecks(soundType);
+
+            if (!canPlay)
+                return null;
+
+            var (audioSource, playTime) = PlaySound_Internal(GetRandomSound(soundList), volumeMultiplier, pitchMultiplier);
+
+            // Tracking waiter
+            StartCoroutine(
+                HandleActiveAudioSource_Tracked(
+                    audioSource,
+                    playTime,
+                    target,
+                    playFinishedCallback)
+                );
+
+            return audioSource;
         }
 
         /// <summary>
@@ -183,9 +265,10 @@ namespace LeakyAbstraction
         /// </summary>
         private void PopulateSoundMap()
         {
+            // No sounds entries defined at all
             if (_soundList == null || _soundList.Length == 0)
             {
-                Debug.LogWarning($"No sounds are assigned to {nameof(SoundManager)}. It will be unable to play any sounds.");
+                _log?.SoundEntries_NoneDefined();
                 return;
             }
 
@@ -195,9 +278,10 @@ namespace LeakyAbstraction
                 if (s.soundType == GameSound.None)
                     continue;
 
+                // Skip entries where audioclip is missing
                 if (s.audioClip == null)
                 {
-                    Debug.LogWarning($"There is an entry for the soundtype '{s.soundType}' that is missing its {nameof(AudioClip)}. This entry won't be used.");
+                    _log?.SoundEntries_FaultyEntry_NoAudioClip(s.soundType);
                     continue;
                 }
 
@@ -220,22 +304,21 @@ namespace LeakyAbstraction
         /// </summary>
         private void CheckAndLogUnassignedSoundTypes()
         {
-            StringBuilder missingSoundsBuilder = null;
+            List<GameSound> missingSoundsList = null;
             foreach (GameSound soundType in Enum.GetValues(typeof(GameSound)))
             {
                 if (soundType == GameSound.None || _soundMap.ContainsKey(soundType))
                     continue;
 
-                if (missingSoundsBuilder == null)
-                    // Included in this scope to avoid allocation of StringBuilder if we don't have anything to report.
-                    missingSoundsBuilder = new StringBuilder(
-                        $"{nameof(SoundManager)} initialization found that there is no sound set for the following sound types:");
+                // Instantiation in this scope to avoid allocation if no reporting is needed.
+                if (missingSoundsList == null)
+                    missingSoundsList = new List<GameSound>();
 
-                missingSoundsBuilder.Append($"{Environment.NewLine} - {soundType.ToString()}");
+                missingSoundsList.Add(soundType);
             }
 
-            if (missingSoundsBuilder != null)
-                Debug.LogWarning(missingSoundsBuilder.ToString());
+            if (missingSoundsList != null)
+                _log?.SoundEntries_SomeNotDefined(missingSoundsList);
         }
 
         /// <summary>
@@ -270,38 +353,41 @@ namespace LeakyAbstraction
         /// </summary>
         private (bool canPlay, List<SoundEntity> availableSounds) SoundPlayPreChecks(GameSound soundType)
         {
+            // Initialization is expected to happen earlier
             if (!_initialized)
             {
-                Debug.LogWarning("Sound playback was requested before SoundManager was initialized. Initializing now.");
+                _log?.Initialization_HadToExpedite();
                 Awake();
             }
 
+            // Sound type 'None' is not valid for playback
             if (soundType == GameSound.None)
             {
-                Debug.LogWarning("Sound playback failed. Soundtype 'None' was requested to play. Specify a valid soundtype.");
+                _log?.PlaybackFail_NoneSoundRequested();
                 return (canPlay: false, null);
             }
 
             var soundListExists = _soundMap.TryGetValue(soundType,
                 out var soundList); // Note out var
 
+            // No valid sound entries are defined for the requested soundtype - i.e. nothing to play
             if (!soundListExists)
             {
-                Debug.LogWarning($"Sound playback failed. No {nameof(AudioClip)} is set for the sound type '{soundType}'.");
+                _log?.PlaybackFail_NoEntryDefined(soundType);
                 return (canPlay: false, null);
             }
 
             if (_availableAudioSources.Count == 0)
             {
+                // Playback fails if pool is exhausted, and we can't grow
                 if (!_canGrowPool)
                 {
-                    Debug.LogWarning($"Sound playback failed, because no {nameof(AudioSource)} was available. " +
-                        $"Increase the initial pool of {nameof(AudioSource)}s, or enable the on-demand creation of {nameof(AudioSource)}s.");
+                    _log?.PlaybackFail_PoolExhausted();
                     return (canPlay: false, null);
                 }
 
-                Debug.LogWarning($"All {nameof(AudioSource)}s were busy. New {nameof(AudioSource)} had to be instantiated for playback. " +
-                    $"If you see this often, it's advisable to increase the initial pool of {nameof(AudioSource)}s.");
+                // If pool can grow, grow pool, and proceed with playback
+                _log?.PoolHadToGrow();
                 CreateAudioSource();
             }
 
@@ -315,15 +401,9 @@ namespace LeakyAbstraction
             => list[Random.Range(0, list.Count)];
 
         /// <summary>
-        /// Reserves and preps an AudioSource, plays the specified sound, and schedules the release of the AudioSource after playback is complete.
+        /// Reserves and preps an AudioSource, and plays the specified sound.
         /// </summary>
-        private AudioSource PlaySound_Internal(
-            SoundEntity sound,
-            float volumeMultiplier,
-            float pitchMultiplier,
-            bool positionalSound,   // Separate bool param to avoid having to do Vector3 equality comparisons.
-            Vector3 soundPosition,  // I don't like having this Vector3 here, but this seemed to be the most straighforward implementation.
-            Action playFinishedCallback = null)
+        private (AudioSource, float playTime) PlaySound_Internal(SoundEntity sound, float volumeMultiplier, float pitchMultiplier)
         {
             // Pop and prepare audio source
             var audioSource = _availableAudioSources.Pop();
@@ -332,25 +412,58 @@ namespace LeakyAbstraction
             audioSource.pitch = pitch;
             audioSource.clip = sound.audioClip;
 
-            // Set AudioSource position if needed
-            if (positionalSound)
-                audioSource.transform.position = soundPosition;
-
-            // Schedule audio source release
-            var playtime = Mathf.Abs(sound.audioClip.length / pitch); // Abs() is to support negative pitch
-            StartCoroutine(
-                ReleaseAudioSourceDelayed(audioSource, playtime, positionalSound, playFinishedCallback)
-            );
+            // Calculate actual time length of sound playback 
+            var playTime = Mathf.Abs(sound.audioClip.length / pitch); // Abs() is to support negative pitch
 
             // Do actual playback
             audioSource.Play();
-            return audioSource;
+            return (audioSource, playTime);
         }
 
         /// <summary>
-        /// Coroutine that holds an AudioSource reference, waits for playback completion, then restores AudioSource for next playback.
+        /// Coroutine that holds the reference of a playing AudioSource, waits for playback completion, tracks a transform during playback, then releases the AudioSource to the pool.
         /// </summary>
-        private IEnumerator ReleaseAudioSourceDelayed(AudioSource audioSource, float releaseAfterSeconds, bool transformResetRequired, Action playFinishedCallback = null)
+        private IEnumerator HandleActiveAudioSource_Tracked(AudioSource audioSource, float releaseAfterSeconds, Transform trackingTarget, Action playFinishedCallback = null)
+        {
+            var trackingSubject = audioSource.transform;
+            var origin = trackingSubject.position;
+
+            // Wait for sound playback completion via polling,
+            // tracking the target's transform during playback.
+            while (audioSource.isPlaying)
+            {
+                trackingSubject.position = trackingTarget.position;
+                yield return null;
+            }
+
+            // Restore original position
+            trackingSubject.position = origin;
+
+            // Push back AudioSource to list of available
+            _availableAudioSources.Push(audioSource);
+
+            // Notify of completion
+            playFinishedCallback?.Invoke();
+        }
+
+        /// <summary>
+        /// Coroutine that holds the reference of a playing AudioSource, moves it to the specified position during playback, then restores and releases it to the pool.
+        /// </summary>
+        private IEnumerator HandleActiveAudioSource_Positioned(AudioSource audioSource, float releaseAfterSeconds, Vector3 soundPosition, Action playFinishedCallback = null)
+        {
+            // Move AudioSource to target position for playback
+            audioSource.transform.position = soundPosition;
+
+            yield return HandleActiveAudioSource(audioSource, releaseAfterSeconds, playFinishedCallback);
+
+            // Restore AudioSource position after playback
+            audioSource.transform.localPosition = _zeroVector;
+        }
+
+        /// <summary>
+        /// Coroutine that holds the reference of a playing AudioSource, waits for playback completion, then restores AudioSource for next playback.
+        /// </summary>
+        private IEnumerator HandleActiveAudioSource(AudioSource audioSource, float releaseAfterSeconds, Action playFinishedCallback)
         {
             //TODO: Double check if this is supposed to be Realtime
             yield return new WaitForSecondsRealtime(releaseAfterSeconds + RELEASE_MARGIN);
@@ -359,20 +472,53 @@ namespace LeakyAbstraction
             int extraWaits = 0;
             while (audioSource.isPlaying)
             {
-                Debug.LogWarning($"{nameof(AudioSource)} wasn't ready for release at the expected time. Waiting cycle: {++extraWaits}. " +
-                    $"\nIf you see this often, consider increasing the {nameof(RELEASE_MARGIN)} constant.");
+                // Report extra wait
+                _log?.AudioSourceNeededExtraWait(++extraWaits);
                 yield return new WaitForSeconds(RETRYRELEASE_WAIT);
             }
-
-            // Put soundplayer gameobject back to our own position, if requested
-            if (transformResetRequired)
-                audioSource.transform.localPosition = Vector3.zero;
 
             // Push back AudioSource to list of available
             _availableAudioSources.Push(audioSource);
 
             // Notify of completion
             playFinishedCallback?.Invoke();
+        }
+
+        /// <summary>
+        /// Encapsulates message logging. Bit messy, but helps to totally avoid string operations and allocations if logging is disabled.
+        /// </summary>
+        private class SoundManagerDebugLogger
+        {
+            public void SoundEntries_NoneDefined()
+                => Debug.LogWarning($"No sound entries are defined for the {nameof(SoundManager)}. Won't be able to play any sounds.");
+
+            public void SoundEntries_SomeNotDefined(List<GameSound> typesWithoutEntry)
+                => Debug.LogWarning($"{nameof(SoundManager)} initialization didn't find any valid sound entries for the following sound types (these sounds cannot play): " +
+                    string.Join(", ", typesWithoutEntry.ToArray()));
+
+            public void SoundEntries_FaultyEntry_NoAudioClip(GameSound missingClipType)
+                => Debug.LogWarning($"An entry for soundtype '{missingClipType}' missing its {nameof(AudioClip)}. This entry will be ignored.");
+
+            public void Initialization_HadToExpedite()
+                => Debug.LogWarning("Sound playback was requested before SoundManager was initialized. Initializing now.");
+
+            public void PlaybackFail_NoneSoundRequested()
+                => Debug.LogWarning("Sound playback failed. Soundtype 'None' was requested to play. Specify a valid soundtype.");
+
+            public void PlaybackFail_NoEntryDefined(GameSound soundType)
+                => Debug.LogWarning($"Sound playback failed. Soundtype '{soundType}' has no sounds assigned to it.");
+
+            public void PlaybackFail_PoolExhausted()
+                => Debug.LogWarning($"Sound playback failed, because no {nameof(AudioSource)} was available. " +
+                    $"Increase the initial pool of {nameof(AudioSource)}s, or enable the on-demand creation of {nameof(AudioSource)}s.");
+
+            public void PoolHadToGrow()
+                => Debug.LogWarning($"All {nameof(AudioSource)}s were busy. New {nameof(AudioSource)} had to be instantiated for playback. " +
+                    $"If you see this often, it's advisable to increase the initial pool of {nameof(AudioSource)}s.");
+
+            public void AudioSourceNeededExtraWait(int extraWaitNum)
+                => Debug.LogWarning($"{nameof(AudioSource)} wasn't ready for release at the expected time. Waiting cycle: {extraWaitNum}. " +
+                    $"\nIf you see this often, consider increasing the {nameof(RELEASE_MARGIN)} constant.");
         }
     }
 }
