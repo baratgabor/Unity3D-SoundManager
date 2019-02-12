@@ -14,6 +14,8 @@ Pro tip: It's totally not spaghetti code, like many things you can find in relat
 
 **Update2:** I encapsulated all debug log messages into a separate class, and added a **logging setting** to the Inspector. So **you can turn off logging for deployed builds** in a way that completely avoids string operations and allocations (since all debug messages are constructed inside this helper class). Available logging settings: `None`, `LogOnlyInEditor` and `LogAlways`.
 
+**Update3:** I swear I'll stop adding these update sections here. :) Anyhow, I refactored the `SoundManager` class again. Plus I changed the public method signatures. The most visible change is that **the methods now return the sound type in the callback**, so you can route multiple playback finished notifications into a single method, and check there which one was finished. In terms of refactoring, internally the class changed a lot; basically I encapsulated all `AudioSource` handling responsibilities into a separate nested class, and cut out *all* code duplication in the method overloads.
+
 ## Quick overview of Inspector pane:
 
 ![SoundManager pane in Inspector](SoundManager-Inspector-example.png)
