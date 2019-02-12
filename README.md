@@ -2,11 +2,11 @@
 ## *With modulation ranges, AudioSource pooling, playing at world coordinates, and even playing while following a Transform*
 #### Version information: Tested in Unity 2018.3, requires scripting runtime set to '.Net 4.x equivalent' (uses C# 7 features)
 
-My take on a light-weight sound manager for Unity3D. Admittedly I haven't looked into any implementations on the Asset Store, etc., because I didn't want to spoil the fun of writing mine from scratch. So this is just a small, single-class component with a nested helper class; with solid core features that should perform reliably and efficiently.
+My take on a light-weight sound manager for Unity3D. Admittedly I haven't looked into any implementations on the Asset Store, etc., because I didn't want to spoil the fun of writing mine from scratch. So this is just a small, relatively simple component with solid core features that should perform reliably and efficiently.
 
 I've been using it in my project for quite some time, and I'm a satisfied customer, so to speak, so I decided to share it.
 
-Pro tip: It's totally not spaghetti code, like many things you can find in relation to Unity. ;) Though, it's not perfect either; ideally I'd separate the concerns a bit more, but the added memory read and method call overheads - however minor - wouldn't be that useful in games. (Actually you can optimize it a bit if you don't mind breaking the DRY principle.)
+Pro tip: It's totally not spaghetti code, like many things you can find in relation to Unity. ;) I tried to generally separate the responsibilities, but without creating a confusing amount of classes/files, so I pretty much nested everything into a single class. I think it's a relatively maintainable/extensible design, so you shouldn't have a very hard time adding new features if you wanted.
 
 *Note that the comments in the code are a bit excessive if you're an experienced developer. I just tried to help others too to understand it better.*
 
@@ -39,24 +39,22 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
   - You can define how many simultaneous sounds you want to support at startup. When you invoke `PlaySound()`, the `SoundManager` automatically reserves an `AudioSource` from the pool to play the requested sound, waits for the playback to finish, and puts the `AudioSource` back to the pool. No polling involved whatsoever. Coroutine-based operation. No wasteful use of collections; it uses a simple `Stack` the way it's supposed to be used. If it runs out of available `AudioSource`s, it can grow the pool on-demand (if you enable this feature).
  
 - ### Support for 3D positioned sound playback
-  - My current game is 2D, so I have no use for this, but I wanted to add this little extra before sharing it. Basically, you can simply use an overload of the `PlaySound()` method that accepts a `Vector3` position defining where to play the sound. So, for example:
+  - My current game is 2D, so I have no use for this, but I wanted to add this little extra before sharing it. Basically, you can simply use the `PlaySoundPositioned()` method that accepts a `Vector3` position defining where to play the sound. So, for example:
  
-    `SoundManager.Instance.PlaySound(GameSound.Death, transform.position)`
+    `SoundManager.Instance.PlaySoundPositioned(GameSound.Death, transform.position)`
  
    - When the playback is complete, the `AudioSource` will be instantly put back to its original position. There is no expensive reparenting involved; the `SoundManager` simply creates a `GameObject` for each `AudioSource` in the pool at startup, so it can later position them anywhere.
    
 - ### NEW: Support for Transform tracking sound playback
-  - After some pondering I decided to add this too. This means being able to use the `SoundManager` in cases when you need a moving `AudioSource` (for a moving `GameObject`). There are two new methods available which take a `Transform`, and they follow the position of this transform for the entire duration of the playback (and then jump back to origin). Invoking these methods are similarly simple, for example:
+  - After some pondering I decided to add this too. This means being able to use the `SoundManager` in cases when you need a moving `AudioSource` (for a moving `GameObject`). I added two new overloads of the `PlaySoundPositioned()` method which take a `Transform`, and they follow the position of this transform for the entire duration of the playback (and then jump back to origin). Invoking these methods are similarly simple, for example:
 
-    `SoundManager.Instance.PlaySoundFollow(GameSound.RocketLaunch, transform)`
-  
-  - This new tracking feature internally uses polling via calling `AudioSource.isPlaying`, instead of fixed time waiting (plus obviously it's updating a `Transform`), so it's a bit more expensive, but probably not noticeable in most cases.
+    `SoundManager.Instance.PlaySoundPositioned(GameSound.RocketLaunch, transform)`
   
 - ### Overriding preset pitch and volume
-  - There is an overload of the `PlaySound()` method accepting two floats which serve as multipliers to pitch and volume. So if you find yourself wanting to play a faster/slower or louder/quieter sound than normal, or play it reverse by using a negative pitch, you can. These multipliers are applied on top of the already randomized pitch and volume, so the sound variation is kept intact.
+  - There is an overload of the `PlaySound()` and `PlaySoundPositioned()` methods that accept two floats which serve as multipliers to pitch and volume. So if you find yourself wanting to play a faster/slower or louder/quieter sound than normal, or play it reverse by using a negative pitch, you can. These multipliers are applied on top of the already randomized pitch and volume, so the sound variation is kept intact.
   
 - ### Callback when playback is finished
-  - All overloads of the `PlaySound()` method accept an optional `callback` parameter, in case you want to be notified when the playback finishes.
+  - All versions of the `PlaySound()` and `PlaySoundPositioned()` methods accept an optional `callback` parameter, in case you want to be notified when the playback finishes.
   - Additionally, all methods return the `AudioSource` playing your requested sound, so you can monitor it yourself if you want. But don't mess with the playback settings on the returned `AudioSource`, because then the `SoundManager` won't be able to predict the end time of the playback (to release the `AudioSource` to the pool). (It does have built-in safety mechanism for additional waiting, though.)
   - If the playback fails for whatever reason, the return value is `null`, so you can actually check if playback was successful.
   
@@ -68,7 +66,7 @@ Pretty much everybody uses some sort of audio or sound manager, from what I'm aw
   - There are a lot of checks internally for various error cases, and they log intelligible warning messages to the console. Of course you might want to strip out this debug logging, integrate some switchable or injected logging system, or whatever.
   
 - ### Generally efficient code
-  - I tried to avoid allocations and losing performance for no good reason. So it uses `bool` flags instead of more expensive checking, properly uses a `Dictionary` for lookups and `Lists` for indexed access, and even caches `Vector3.zero` to avoid those repetitive calls.
+  - I tried to avoid allocations and losing performance for no good reason. The code properly uses a `Dictionary` for lookups and `Lists` for indexed access, basically doesn't `new` up and throw away anything, etc.
   - One thing you might want to look into is the infamous allocation when you use `enum` as `Dictionary` keys. I have no idea if this still happens these days; if so, you can supposedly avoid it by providing a custom comparer for the `enum`.
 
 ## Usage examples
@@ -81,19 +79,19 @@ Just for illustrative purposes, because it's really obvious and straightforward 
 
   - Playing a 'sound type' **at a given world position**:
 
-     `SoundManager.Instance.PlaySound(GameSound.Rocket, transform.position);`
+     `SoundManager.Instance.PlaySoundPositioned(GameSound.Rocket, transform.position);`
      
   - Playing a 'sound type' **at a given world position**, by **overriding pitch and volume** with a multiplier (obviously you can leave out the parameter names :) ):
 
-     `SoundManager.Instance.PlaySound(GameSound.Rocket, transform.position, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f);`
+     `SoundManager.Instance.PlaySoundPositioned(GameSound.Rocket, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f, transform.position);`
      
   - Playing a 'sound type' **at a given world position**, by **overriding pitch and volume** with a multiplier, and setting a **callback to be invoked when the sound playback finishes** (where *DoAfterPlayback* is a void parameterless method):
 
-     `SoundManager.Instance.PlaySound(GameSound.Rocket, transform.position, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f, DoAfterPlayback);`
+     `SoundManager.Instance.PlaySoundPositioned(GameSound.Rocket, volumeMultiplier: 0.5f, pitchMultiplier: 0.6f, transform.position, DoAfterPlayback);`
      
      (The new `Transform` tracking playback is similarly simple, so I'm not including those examples.)
      
-*(Note that the callback shown is obviously available as an optional parameter on all of the method overloads, not just on the longest. Also note that there is an overload for setting pitch and volume override without having to specify a `Vector3`.)*
+*(Note that the callback shown is obviously available as an optional parameter on all of the method overloads, not just on the longest. Also note that there is an overload for setting pitch and volume override for the simple `PlaySound()` method too.)*
 
 ## Setup
 
@@ -103,10 +101,9 @@ Just for illustrative purposes, because it's really obvious and straightforward 
 
     *(I have a `ScriptableObject`-based architecture that decouples configuration data from components, and possibly I'll convert my `SoundManager` to use that, but I felt it would complicate matters too much if I included it here. I intended to share this just as a simple but powerful component.)*
 
-4. **You're ready to call `SoundManager`'s `PlaySound()` methods.**
+4. **You're ready to call `SoundManager`'s `PlaySound()` and `PlaySoundPositioned()` methods.**
 
-    *(Note that `SoundManager`, as it is provided here, uses a very simple singleton implementation that exposes a static instance of itself, called `Instance`. This instance is created when the class is first instantiated, and any further instantiation (which shouldn't happen to begin with) will destroy itself. You can just change this to however you prefer to access your service components. For example you can just inject the SoundManager as a dependency into your classes through their constructor. Just kidding, because Unity sucks and you can't even use constructors in your MonoBehaviour classes. ;) )*
-
+    *(Note that `SoundManager`, as it is provided here, uses a very simple singleton implementation that exposes a static instance of itself, called `Instance`. This instance is created when the class is first instantiated, and any further instantiation (which shouldn't happen to begin with) will destroy itself. You can just change this to however you prefer to access your service components. For example you can just inject the SoundManager as a dependency into your classes through their constructor. Just kidding, since you can't use constructors at all in your Unity MonoBehaviour classes. ;P )*
 
 ## What this component doesn't have
 
