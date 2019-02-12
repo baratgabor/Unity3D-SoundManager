@@ -6,7 +6,7 @@ My take on a light-weight sound manager for Unity3D. Admittedly I haven't looked
 
 I've been using it in my project for quite some time, and I'm a satisfied customer, so to speak, so I decided to share it.
 
-Pro tip: It's totally not spaghetti code, like many things you can find in relation to Unity. ;) I tried to generally separate the responsibilities, but without creating a confusing amount of classes/files, so I pretty much nested everything into a single class. I think it's a relatively maintainable/extensible design, so you shouldn't have a very hard time adding new features if you wanted. (I also have some ideas for additional features, but those would require some more book-keeping, plus classes where nesting them is not really justifiable.)
+Pro tip: It's totally not spaghetti code. ;) I tried to generally separate the responsibilities, but without creating a confusing amount of classes/files, so I pretty much nested everything into a single class. I think it's a relatively maintainable/extensible design, so you shouldn't have a very hard time adding new features if you wanted. (I also have some ideas for additional features, but those would require some more book-keeping, plus classes where nesting them is not really justifiable.)
 
 *Note that the comments in the code are a bit excessive if you're an experienced developer. I just tried to help others too to understand it better.*
 
