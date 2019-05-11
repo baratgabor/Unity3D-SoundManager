@@ -118,4 +118,4 @@ Just for illustrative purposes, because it's really obvious and straightforward 
 
 ## Licence
 
-Only mentioning this because someone asked me about it. You can use this code for whatever or however you want. It's not exactly a huge feat of software engineering. Perhaps just try not to sell it wholesale on the Asset Store as your own work. :) But if you make something significantly more complex out of it, feel free to call it your own and sell it if you want. Though, credit is always welcomed of course.
+Since it seems some people are using this, and actually someone asked me earlier about the licence... I added a permissive MIT licence for your peace of mind.
